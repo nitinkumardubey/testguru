@@ -1,4 +1,5 @@
 from sqlalchemy import Integer, Boolean, DateTime, Column, String, Enum, LargeBinary
+from sqlalchemy.dialects.postgresql import JSONB
 from database import Base
 from datetime import datetime
 import enum
@@ -13,7 +14,6 @@ class User(Base):
 
     email = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    password = Column(String, nullable=False)
     phone_no = Column(String)
     image = Column(LargeBinary, nullable=True)
     role = Column(Enum(UserRole), nullable=False)
@@ -27,3 +27,20 @@ class EmailOTP(Base):
     is_verified = Column(Boolean, default=False)
     created_on = Column(DateTime, default=datetime.utcnow)
     expiry_time = Column(DateTime, nullable=False)
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    email = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    password = Column(String, nullable=False)
+    phone_no = Column(String)
+    image = Column(LargeBinary, nullable=True)
+    role = Column(Enum(UserRole), nullable=False)
+
+
+class ApiManage(Base):
+    __tablename__ = "api_manage"
+
+    role = Column(String, primary_key=True, index=True)
+    permissions = Column(JSONB, nullable=False)

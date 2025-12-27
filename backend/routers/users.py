@@ -31,7 +31,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully"}
 
 # READ ALL
-@router.get("/")
+@router.get("/list_all_users")
 def get_users(db: Session = Depends(get_db)):
     return db.query(User).all()
 
@@ -63,6 +63,8 @@ def update_user(email: str, data: UserUpdate, db: Session = Depends(get_db)):
         user.phone_no = data.phone_no
     if data.role is not None:
         user.role = UserRole(data.role)
+    if data.image is not None:
+        user.image = data.image
 
     db.commit()
     return {"message": "User updated successfully"}
@@ -77,26 +79,6 @@ def delete_user(email: str, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
-
-# UPLOAD IMAGE
-@router.post("/{email}/image")
-def upload_image(email: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.image = file.file.read()
-    db.commit()
-    return {"message": "Image uploaded successfully"}
-
-# GET IMAGE
-@router.get("/{email}/image")
-def get_image(email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
-    if not user or not user.image:
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    return Response(content=user.image, media_type="image/jpeg")
 
 # UTILITY FUNCTIONS
 def generate_otp():
