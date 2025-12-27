@@ -1,4 +1,5 @@
-from sqlalchemy import Integer, Boolean, DateTime, Column, String, Enum, LargeBinary
+from sqlalchemy import Integer, Boolean, DateTime, Column, String, Enum, LargeBinary, BigInteger, Text, TIMESTAMP
+from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB
 from database import Base
 from datetime import datetime
@@ -44,3 +45,16 @@ class ApiManage(Base):
 
     role = Column(String, primary_key=True, index=True)
     permissions = Column(JSONB, nullable=False)
+
+
+class ApiLog(Base):
+    __tablename__ = "api_logs"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+    path = Column(Text, nullable=False)
+    method = Column(Text, nullable=False)
+    status_code = Column(Integer)
+    response_time_ms = Column(Integer)
+    ip_address = Column(Text)
+    request_body = Column(JSONB)
+    created_at = Column(TIMESTAMP, server_default=func.now())

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Any
+from datetime import datetime
 
 class UserCreate(BaseModel):
     email: str
@@ -61,3 +62,17 @@ class RoleRequest(BaseModel):
 class ApiPermissions(BaseModel):
     mapped: List[str]
     unmapped: List[str]
+
+class APILogSchema(BaseModel):
+    id: int
+    path: str
+    method: str
+    status_code: Optional[int] = None
+    response_time_ms: Optional[int] = None
+    ip_address: Optional[str] = None
+    request_body: Optional[Any] = None
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
