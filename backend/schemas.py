@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserCreate(BaseModel):
@@ -22,3 +22,11 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SendOTP(BaseModel):
+    email: EmailStr
+
+class VerifyOTP(BaseModel):
+    email: EmailStr
+    otp: str

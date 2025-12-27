@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models import User, UserRole
-from schemas import UserCreate, UserUpdate, UserResponse
+from database import Base, engine, get_db
+from models import User, UserRole, EmailOTP
+from schemas import UserCreate, UserUpdate, UserResponse, SendOTP, VerifyOTP
 from fastapi.responses import Response
+import random
+from datetime import datetime, timedelta
+from email_service import send_email
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -94,3 +97,51 @@ def get_image(email: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Image not found")
 
     return Response(content=user.image, media_type="image/jpeg")
+
+# UTILITY FUNCTIONS
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+def get_expiry_time(minutes: int = 5):
+    return datetime.utcnow() + timedelta(minutes=minutes)
+
+@router.post("/send-otp")
+def send_otp(data: SendOTP, db: Session = Depends(get_db)):
+    otp = generate_otp()
+    expiry = get_expiry_time()
+
+    otp_entry = EmailOTP(
+        email=data.email,
+        otp=otp,
+        expiry_time=expiry
+    )
+
+    db.add(otp_entry)
+    db.commit()
+
+    send_email(data.email, otp)
+
+    return {"message": "OTP sent successfully"}
+
+# ---------------- VERIFY OTP ----------------
+@router.post("/verify-otp")
+def verify_otp(data: VerifyOTP, db: Session = Depends(get_db)):
+    otp_record = db.query(EmailOTP).filter(
+        EmailOTP.email == data.email,
+        EmailOTP.otp == data.otp,
+        EmailOTP.is_verified == False
+    ).first()
+
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    if datetime.utcnow() > otp_record.expiry_time:
+        raise HTTPException(
+            status_code=400,
+            detail="Verification failed due to OTP expiry"
+        )
+
+    otp_record.is_verified = True
+    db.commit()
+
+    return {"message": "OTP verified successfully"}
